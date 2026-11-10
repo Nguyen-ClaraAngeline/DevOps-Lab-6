@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+import os, sys
+from urllib.parse import urlparse
+import psycopg
+
+if os.getenv("ALLOW_TEST_RESET") != "1":
+    sys.exit("Refusing: set ALLOW_TEST_RESET=1 to confirm this is a test environment")
+url = os.environ.get("DATABASE_URL", "")
+dbname = urlparse(url).path.lstrip("/")
+if not dbname.endswith("_test"):
+    sys.exit(f"Refusing: database name {dbname!r} is not a test database (must end in _test)")
+with psycopg.connect(url) as c:
+    c.execute("TRUNCATE jobs, order_items, orders, idempotency_keys")
+    for sku, n in (("KIT-100", 7), ("PART-200", 12), ("PACK-300", 5)):
+        c.execute("UPDATE products SET available=%s WHERE sku=%s", (n, sku))
+print(f"Reset {dbname}")

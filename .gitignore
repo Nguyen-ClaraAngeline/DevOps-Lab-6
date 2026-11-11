@@ -9,3 +9,5 @@ node_modules/
 *.dump
 *.sql.gz
 .pytest_cache/
+
+.env

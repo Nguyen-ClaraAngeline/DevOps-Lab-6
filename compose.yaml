@@ -32,6 +32,8 @@ services:
 
   api:
     build: ./api
+    image: ${API_IMAGE:-fulfillops-api:local}
+    build: ./api
     depends_on:
       migrate: { condition: service_completed_successfully }
     environment:
@@ -47,6 +49,7 @@ services:
 
   worker:
     build: ./worker
+    image: ${WORKER_IMAGE:-fulfillops-worker:local}
     depends_on:
       migrate: { condition: service_completed_successfully }
     environment:

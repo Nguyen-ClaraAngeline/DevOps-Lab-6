@@ -1,0 +1,153 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read            # minimal by default; publish job adds packages: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  API_IMAGE: fulfillops-api:${{ github.sha }}
+  WORKER_IMAGE: fulfillops-worker:${{ github.sha }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
+
+  tests:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-throwaway
+          POSTGRES_DB: fulfillops_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci" --health-interval 5s
+          --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci-throwaway@localhost:5432/fulfillops_test
+      PGHOST: localhost
+      PGUSER: ci
+      PGPASSWORD: ci-throwaway
+      PGDATABASE: fulfillops_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt -r api/requirements.txt -r worker/requirements.txt
+      - name: Apply migrations (also tests migrate.sh)
+        run: |
+          sudo mkdir -p /migrations
+          sudo cp db/migrations/*.sql /migrations/
+          sh db/migrate.sh
+      - name: Unit and integration tests
+        run: PYTHONPATH=api/app:worker pytest tests -v
+
+  build:
+    needs: [lint, tests]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Isolated Compose stack (random throwaway password)
+        run: |
+          printf 'POSTGRES_USER=fulfillops\nPOSTGRES_PASSWORD=%s\nPOSTGRES_DB=fulfillops\n' "$(openssl rand -hex 16)" > .env
+          docker compose up -d --build
+          for i in $(seq 1 60); do
+            curl -fsS http://localhost:8080/health/ready >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8080/health/ready
+      - name: Public checker (fresh DB)
+        run: python3 assessment/fulfillops_public_checker.py --base-url http://localhost:8080 --concurrency --stress
+      - name: Compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+      - name: Save images
+        run: docker save "$API_IMAGE" "$WORKER_IMAGE" -o images.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: images
+          path: images.tar
+          retention-days: 1
+
+  scan:
+    needs: build
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [api, worker]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: images
+      - run: docker load -i images.tar
+      - name: Informational scan (all severities, never fails)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: fulfillops-${{ matrix.name }}:${{ github.sha }}
+          format: table
+          exit-code: "0"
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+      - name: SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: fulfillops-${{ matrix.name }}:${{ github.sha }}
+          format: cyclonedx
+          output: sbom-${{ matrix.name }}.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.name }}
+          path: sbom-${{ matrix.name }}.cdx.json
+      - name: Blocking scan (fixable CRITICAL/HIGH fails the build)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: fulfillops-${{ matrix.name }}:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
+  publish:
+    needs: [lint, tests, build, scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: images
+      - run: docker load -i images.tar
+      - name: Push images tagged with the commit SHA
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          for n in api worker; do
+            REF="ghcr.io/$OWNER/fulfillops-$n:$GITHUB_SHA"
+            docker tag "fulfillops-$n:$GITHUB_SHA" "$REF"
+            docker push "$REF"
+            docker inspect --format '{{index .RepoDigests 0}}' "$REF" >> "$GITHUB_STEP_SUMMARY"
+          done

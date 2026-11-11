@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: worker}
+  template:
+    metadata:
+      labels: {app: worker}
+    spec:
+      containers:
+        - name: worker
+          image: fulfillops-worker:v1
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: {name: fulfillops-config}
+          env:
+            - name: DATABASE_URL
+              valueFrom: {secretKeyRef: {name: fulfillops-db, key: DATABASE_URL}}
+          ports:
+            - containerPort: 9100
+          livenessProbe:
+            httpGet: {path: /metrics, port: 9100}
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false

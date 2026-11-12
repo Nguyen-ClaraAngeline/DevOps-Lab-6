@@ -51,7 +51,7 @@ def process(conn, order_id):
 def complete(conn, order_id):
     with conn.transaction():                         # order + job in ONE transaction
         conn.execute("UPDATE orders SET status='completed' WHERE id=%s AND status <> 'completed'", (order_id,))
-        conn.execute("UPDATE jobs SET state='done', locked_by=NULL, locked_until=NULL, last_error=NULL "
+        conn.execute("UPDATE jobs SET state='completed', locked_by=NULL, locked_until=NULL, last_error=NULL "
                      "WHERE order_id=%s", (order_id,))
 
 def fail(conn, order_id, attempts, max_attempts, err):

@@ -16,6 +16,8 @@ spec:
   template:
     metadata:
       labels: {app: api}
+      annotations:
+        rollout-note: "good-1"
     spec:
       containers:
         - name: api

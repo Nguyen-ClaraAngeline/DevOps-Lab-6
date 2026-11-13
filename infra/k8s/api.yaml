@@ -17,7 +17,7 @@ spec:
     metadata:
       labels: {app: api}
       annotations:
-        rollout-note: "good-2"
+        rollout-note: "good-3"
     spec:
       containers:
         - name: api

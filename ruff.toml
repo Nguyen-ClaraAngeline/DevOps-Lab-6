@@ -1,3 +1,4 @@
 line-length = 100
+extend-exclude = ["assessment"]
 [lint]
-ignore = ["E701", "E702", "E704", "E731"]   # allow the one-line style used in the API code
+ignore = ["E701", "E702", "E731"]

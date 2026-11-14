@@ -1,0 +1,25 @@
+Part 9 integrated drill | disposable kind cluster and temporary Git remote | no shared GitHub branch changed
+2026-11-14T06:24:04.8383514+00:00 Accepted order aafcb470-c2b3-4eb1-ab2d-e865c0070a48
+2026-11-14T06:24:06.1452234+00:00 {"order_id":"aafcb470-c2b3-4eb1-ab2d-e865c0070a48","customer_id":"PART9-AUDIT","total_cents":1299,"status":"completed","created_at":"2026-11-14T07:24:04.827953+01:00","items":[{"sku":"KIT-100","quantity":1}]}
+2026-11-14T06:24:06.3777005+00:00 Before order IDs: 39800807-6789-44f3-b5ea-88d45723e839, aafcb470-c2b3-4eb1-ab2d-e865c0070a48
+2026-11-14T06:24:06.4928675+00:00 Known-good probe begins on 109e02f223c06a2fbb49fac04ade4c97eed60f32
+2026-11-14T06:24:09.1626732+00:00 Published Git revision 6d98b1c071c3b2cc087a7f6405291832256a3637
+2026-11-14T06:24:26.8508138+00:00 Revision 6d98b1c071c3b2cc087a7f6405291832256a3637 Synced and Healthy
+2026-11-14T06:24:36.8344189+00:00 PROBE duration=30.0s total=121 success=121 failures=0 file=Docs/evidence/part9-integrated-good.csv
+2026-11-14T06:24:37.4232089+00:00 Published Git revision 29a34b07c37f10678282590aad5225be179841c5
+2026-11-14T06:25:17.3139769+00:00 PROBE duration=30.0s total=121 success=121 failures=0 file=Docs/evidence/part9-integrated-stalled.csv
+2026-11-14T06:25:21.4393955+00:00 Broken revision 29a34b07c37f10678282590aad5225be179841c5 did not finish rollout
+NAME         SYNC STATUS   HEALTH STATUS
+fulfillops   Synced        Progressing
+NAME                  READY   STATUS    RESTARTS   AGE
+api-5bfcdf67c-7l8gc   1/1     Running   0          59s
+api-5bfcdf67c-kqkgg   1/1     Running   0          63s
+api-886dd6b79-m4nkv   0/1     Running   0          35s
+LAST SEEN   TYPE      REASON      OBJECT                    MESSAGE
+33s         Warning   Unhealthy   pod/api-886dd6b79-m4nkv   Readiness probe failed: Get "http://10.244.0.23:8080/health/ready-broken": dial tcp 10.244.0.23:8080: connect: connection refused
+1s          Warning   Unhealthy   pod/api-886dd6b79-m4nkv   Readiness probe failed: HTTP probe failed with statuscode: 404
+2026-11-14T06:25:22.2257670+00:00 Published Git revision e7dfae342f4d26d952ac86c3b36236ae72ace69e
+2026-11-14T06:25:31.9418636+00:00 Revision e7dfae342f4d26d952ac86c3b36236ae72ace69e Synced and Healthy
+2026-11-14T06:25:32.1557051+00:00 After order IDs: 39800807-6789-44f3-b5ea-88d45723e839, aafcb470-c2b3-4eb1-ab2d-e865c0070a48
+2026-11-14T06:25:32.1869522+00:00 PASS: exact order IDs unchanged and the completed order still returns the same total.
+2026-11-14T06:25:34.5143328+00:00 samples=250 errors=0 p95=10.2ms output=Docs/evidence/part9-integrated-p95.csv

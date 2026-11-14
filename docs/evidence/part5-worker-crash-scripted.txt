@@ -1,0 +1,14 @@
+2026-11-14T03:58:16.499782+00:00 Started api PID=30456
+2026-11-14T03:58:17.672868+00:00 PACK-300 before submission: 5
+2026-11-14T03:58:17.682888+00:00 Started part5-slow PID=40800
+2026-11-14T03:58:18.233654+00:00 Accepted order 460d36b5-40c5-4881-8c79-e02b842fa766
+2026-11-14T03:58:18.345309+00:00 Started part5-recovery PID=10636
+2026-11-14T03:58:18.858219+00:00 Before kill: ('queued', 'processing', 1, 5, 'part5-slow', None)
+2026-11-14T03:58:18.858266+00:00 Killing part5-slow PID=40800; recovery worker already serving metrics
+2026-11-14T03:58:18.860743+00:00 Killed part5-slow; exit code=1
+2026-11-14T03:58:38.650321+00:00 {"ts": 1794628698.3224318, "worker": "part5-slow", "event": "claimed", "order_id": "460d36b5-40c5-4881-8c79-e02b842fa766", "attempt": 1, "utc": "2026-11-14T03:58:18.322432+00:00"}
+2026-11-14T03:58:38.650357+00:00 {"ts": 1794628718.3555274, "worker": "part5-recovery", "event": "claimed", "order_id": "460d36b5-40c5-4881-8c79-e02b842fa766", "attempt": 2, "utc": "2026-11-14T03:58:38.355527+00:00"}
+2026-11-14T03:58:38.650370+00:00 {"ts": 1794628718.6130686, "worker": "part5-recovery", "event": "completed", "order_id": "460d36b5-40c5-4881-8c79-e02b842fa766", "utc": "2026-11-14T03:58:38.613069+00:00"}
+2026-11-14T03:58:38.651191+00:00 Final SQL (460d36b5-40c5-4881-8c79-e02b842fa766): ('completed', 'completed', 2, 5, None, None); PACK-300 available=4
+2026-11-14T03:58:38.655094+00:00 fulfillops_worker_jobs_processed_total{result="completed"} 1.0
+2026-11-14T03:58:38.655147+00:00 PASS: crash drill

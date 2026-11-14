@@ -16,12 +16,10 @@ spec:
   template:
     metadata:
       labels: {app: api}
-      annotations:
-        rollout-note: "good-3"
     spec:
       containers:
         - name: api
-          image: fulfillops-api:v2
+          image: fulfillops-api:part8
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

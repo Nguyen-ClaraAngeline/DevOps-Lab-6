@@ -1,0 +1,27 @@
+Part 5: Worker crash and recovery evidence
+
+Environment: Isolated FulfillOps test database (fulfillops-part5).
+The drill submitted a one-unit PART-200 order and targeted the worker
+processing that order. The result below is from the post-recovery SQL query.
+
+Order ID: d32fbba9-9c5e-4636-8c22-0560790677ad
+
+Post-recovery SQL result (captured):
+
+                  id                  |  status   |   state   | attempts
+--------------------------------------+-----------+-----------+----------
+ d32fbba9-9c5e-4636-8c22-0560790677ad | completed | completed |        2
+(1 row)
+
+Inventory: PART-200 available = 11 (reported after recovery).
+
+Interpretation: The same order remained in PostgreSQL and ended completed.
+Its job also ended completed after two claim attempts. The stock reading is
+consistent with a single one-unit reservation from the seeded stock of 12.
+The SQL row alone does not identify which worker finished the job.
+
+Append these terminal excerpts for the same order ID if available:
+- First worker: claimed, attempt 1.
+- Fault injection: UTC timestamp of the kill and the terminated worker name or PID.
+- Recovery worker: claimed, attempt 2, then completed.
+- To establish the two-worker setup: recovery worker startup before the kill.

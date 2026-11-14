@@ -5,7 +5,7 @@ import psycopg
 import os
 
 
-def test_concurrent_requests_with_distinct_keys_create_both_orders(
+def test_concurrent_distinct_keys_cannot_oversell(
     client, reset_test_db
 ):
     barrier = Barrier(2)
@@ -17,7 +17,7 @@ def test_concurrent_requests_with_distinct_keys_create_both_orders(
             headers={"Idempotency-Key": key},
             json={
                 "customer_id": customer_id,
-                "items": [{"sku": "KIT-100", "quantity": 3}],
+                "items": [{"sku": "KIT-100", "quantity": 4}],
             },
         )
 
@@ -28,22 +28,15 @@ def test_concurrent_requests_with_distinct_keys_create_both_orders(
         ]
         responses = [future.result(timeout=15) for future in futures]
 
-    assert all(response.status_code == 202 for response in responses)
+    assert sorted(r.status_code for r in responses) == [202, 409]
 
-    order_ids = {
-        response.json()["order_id"] for response in responses
-    }
-    assert len(order_ids) == 2
+    rejected = next(r for r in responses if r.status_code == 409)
+    assert rejected.json()["error"]["code"] == "OUT_OF_STOCK"
 
-    assert client.get("/api/v1/inventory/KIT-100").json()["available"] == 1
+    assert client.get("/api/v1/inventory/KIT-100").json()["available"] == 3
 
     with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
-        order_count = conn.execute(
-            "SELECT count(*) FROM orders"
-        ).fetchone()[0]
-        job_count = conn.execute(
-            "SELECT count(*) FROM jobs"
-        ).fetchone()[0]
+        assert conn.execute("SELECT count(*) FROM orders").fetchone()[0] == 1
+        assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 1
 
-    assert order_count == 2
-    assert job_count == 2
+

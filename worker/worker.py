@@ -1,6 +1,6 @@
 import logging, os, socket, sys, time, json
 import psycopg
-from prometheus_client import Counter, start_http_server
+from prometheus_client import CollectorRegistry, Counter, start_http_server
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 WORKER_ID = os.getenv("WORKER_ID", f"{socket.gethostname()}-{os.getpid()}")
@@ -12,8 +12,19 @@ TEST_MODE = os.getenv("TEST_MODE") == "1"
 POISON_CUSTOMER_ID = os.getenv("POISON_CUSTOMER_ID", "CUST-POISON")
 METRICS_PORT = int(os.getenv("METRICS_PORT", "9100"))
 
-worker_retries = Counter("fulfillops_worker_retries_total", "Worker retries")
-jobs_processed = Counter("fulfillops_worker_jobs_processed_total", "Jobs processed", ["result"])
+WORKER_REGISTRY = CollectorRegistry()
+
+worker_retries = Counter(
+    "fulfillops_worker_retries_total",
+    "Worker retries",
+    registry=WORKER_REGISTRY,
+)
+jobs_processed = Counter(
+    "fulfillops_worker_jobs_processed_total",
+    "Jobs processed",
+    ["result"],
+    registry=WORKER_REGISTRY,
+)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 log = logging.getLogger("worker")
@@ -94,7 +105,7 @@ def fail(conn, order_id, attempts, max_attempts, err):
     return True
 
 def main():
-    start_http_server(METRICS_PORT)
+    start_http_server(METRICS_PORT, registry=WORKER_REGISTRY)
     jlog(event="started", lease=LEASE_SECONDS, test_mode=TEST_MODE)
     with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         while True:

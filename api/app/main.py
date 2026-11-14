@@ -13,7 +13,7 @@ from errors import ApiError
 from validation import parse_order
 import orders, metrics
 
-REQUIRED_MIGRATION = "001"   # must match your migration tracking table
+REQUIRED_MIGRATION = "001"
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 log = logging.getLogger("fulfillops")

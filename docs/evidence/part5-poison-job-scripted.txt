@@ -1,0 +1,18 @@
+2026-11-14T03:58:42.272222+00:00 Started api PID=19564
+2026-11-14T03:58:43.450624+00:00 PACK-300 before submission: 5
+2026-11-14T03:58:43.460742+00:00 Started part5-poison PID=40452
+2026-11-14T03:58:44.586782+00:00 Accepted order 97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2
+2026-11-14T03:58:49.249647+00:00 {"ts": 1794628724.6600356, "worker": "part5-poison", "event": "claimed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 1, "utc": "2026-11-14T03:58:44.660036+00:00"}
+2026-11-14T03:58:49.249685+00:00 {"ts": 1794628724.7677794, "worker": "part5-poison", "event": "failed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 1, "error": "poison job (test mode)", "utc": "2026-11-14T03:58:44.767779+00:00"}
+2026-11-14T03:58:49.249698+00:00 {"ts": 1794628725.08292, "worker": "part5-poison", "event": "claimed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 2, "utc": "2026-11-14T03:58:45.082920+00:00"}
+2026-11-14T03:58:49.249709+00:00 {"ts": 1794628725.190855, "worker": "part5-poison", "event": "failed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 2, "error": "poison job (test mode)", "utc": "2026-11-14T03:58:45.190855+00:00"}
+2026-11-14T03:58:49.249720+00:00 {"ts": 1794628725.7107794, "worker": "part5-poison", "event": "claimed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 3, "utc": "2026-11-14T03:58:45.710779+00:00"}
+2026-11-14T03:58:49.249737+00:00 {"ts": 1794628725.8184485, "worker": "part5-poison", "event": "failed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 3, "error": "poison job (test mode)", "utc": "2026-11-14T03:58:45.818449+00:00"}
+2026-11-14T03:58:49.249746+00:00 {"ts": 1794628726.8570623, "worker": "part5-poison", "event": "claimed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 4, "utc": "2026-11-14T03:58:46.857062+00:00"}
+2026-11-14T03:58:49.249756+00:00 {"ts": 1794628726.9650147, "worker": "part5-poison", "event": "failed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 4, "error": "poison job (test mode)", "utc": "2026-11-14T03:58:46.965015+00:00"}
+2026-11-14T03:58:49.249764+00:00 {"ts": 1794628729.0440845, "worker": "part5-poison", "event": "claimed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 5, "utc": "2026-11-14T03:58:49.044085+00:00"}
+2026-11-14T03:58:49.249773+00:00 {"ts": 1794628729.1519606, "worker": "part5-poison", "event": "failed", "order_id": "97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2", "attempt": 5, "error": "poison job (test mode)", "utc": "2026-11-14T03:58:49.151961+00:00"}
+2026-11-14T03:58:49.250603+00:00 Final SQL (97b3e6c3-4af4-46cc-9a05-c0f9c66c85a2): ('failed', 'dead', 5, 5, None, 'poison job (test mode)'); PACK-300 available=4
+2026-11-14T03:58:54.256171+00:00 Second SQL check: unchanged at 5/5 attempts; PACK-300 available=4
+2026-11-14T03:58:54.261180+00:00 fulfillops_worker_retries_total 4.0
+2026-11-14T03:58:54.261254+00:00 PASS: poison drill

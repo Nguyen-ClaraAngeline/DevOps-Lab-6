@@ -1,0 +1,39 @@
+Isolated Part 9 integration audit | 2026-11-14T11:14:48.1439696+00:00
+migrate-1  | CREATE TABLE
+migrate-1  | apply 001
+migrate-1  | CREATE TABLE
+migrate-1  | CREATE TABLE
+migrate-1  | CREATE TABLE
+migrate-1  | CREATE TABLE
+migrate-1  | CREATE TABLE
+migrate-1  | CREATE INDEX
+migrate-1  | CREATE INDEX
+migrate-1  | INSERT 0 1
+migrate-1  | apply 002
+migrate-1  | INSERT 0 1
+migrate-1  | apply 003
+migrate-1  | INSERT 0 1
+migrate-1  | apply 004
+migrate-1  | INSERT 0 3
+migrate-1  | INSERT 0 1
+WARNING: test orders consume stock. Run on an isolated TEST deployment; never production.
+PASS Liveness endpoint
+PASS Readiness endpoint
+PASS Catalog and fixed prices
+PASS Unknown order returns 404
+PASS Missing Idempotency-Key returns 400
+PASS Invalid item quantity returns 422
+PASS Inventory reading
+PASS Create order and idempotent retry
+PASS Conflicting idempotency payload rejected
+PASS Asynchronous worker eventually completes
+PASS Inventory reduced exactly once
+PASS Prometheus metrics exposed
+PASS Concurrent inventory reservations are atomic
+PASS Eight concurrent identical-key requests reserve once
+PASS Duplicate SKU lines aggregate and bill correctly
+
+RESULT: 15 passed / 0 failed / 0 skipped
+Stopped the Compose worker before pytest; tests invoke their own worker claims.
+.....................................................                    [100%]
+53 passed in 1.61s

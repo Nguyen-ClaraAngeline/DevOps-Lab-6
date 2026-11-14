@@ -4,10 +4,10 @@ Project: fulfillops-part6-6241b545; temporary port override: database internal o
 Clean build: docker compose build --no-cache
 Clean build completed successfully.
 NAME                                  IMAGE                                        COMMAND                  SERVICE   CREATED          STATUS                      PORTS
-fulfillops-part6-6241b545-api-1       fulfillops-part6-6241b545-api:optimized      "uvicorn main:app --…"   api       18 seconds ago   Up 10 seconds (healthy)     127.0.0.1:49739->8080/tcp
-fulfillops-part6-6241b545-db-1        postgres:16.4-bookworm                       "docker-entrypoint.s…"   db        19 seconds ago   Up 17 seconds (healthy)     5432/tcp
-fulfillops-part6-6241b545-migrate-1   postgres:16.4-bookworm                       "sh /migrate.sh"         migrate   18 seconds ago   Exited (0) 11 seconds ago   
-fulfillops-part6-6241b545-worker-1    fulfillops-part6-6241b545-worker:optimized   "python worker.py"       worker    18 seconds ago   Up 10 seconds (healthy)     
+fulfillops-part6-6241b545-api-1       fulfillops-part6-6241b545-api:optimized      "uvicorn main:app --â€¦"   api       18 seconds ago   Up 10 seconds (healthy)     127.0.0.1:49739->8080/tcp
+fulfillops-part6-6241b545-db-1        postgres:16.4-bookworm                       "docker-entrypoint.sâ€¦"   db        19 seconds ago   Up 17 seconds (healthy)     5432/tcp
+fulfillops-part6-6241b545-migrate-1   postgres:16.4-bookworm                       "sh /migrate.sh"         migrate   18 seconds ago   Exited (0) 11 seconds ago
+fulfillops-part6-6241b545-worker-1    fulfillops-part6-6241b545-worker:optimized   "python worker.py"       worker    18 seconds ago   Up 10 seconds (healthy)
 api: uid=10001(appuser) gid=999(appuser) groups=999(appuser)
 worker: uid=10001(appuser) gid=999(appuser) groups=999(appuser)
 Migration exited 0.

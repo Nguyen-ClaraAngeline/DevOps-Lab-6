@@ -48,27 +48,50 @@ def process(conn, order_id):
     if TEST_MODE and cid == POISON_CUSTOMER_ID:      # deterministic poison job
         raise RuntimeError("poison job (test mode)")
 
-def complete(conn, order_id):
+OWNED_CLAIM = """
+WHERE order_id=%s AND state='processing' AND locked_by=%s AND attempts=%s
+  AND locked_until > clock_timestamp()
+"""
+
+
+def complete(conn, order_id, attempts):
     with conn.transaction():                         # order + job in ONE transaction
+        job = conn.execute(
+            "UPDATE jobs SET state='completed', locked_by=NULL, locked_until=NULL, last_error=NULL "
+            + OWNED_CLAIM, (order_id, WORKER_ID, attempts),
+        )
+        if job.rowcount == 0:
+            return False
         conn.execute("UPDATE orders SET status='completed' WHERE id=%s AND status <> 'completed'", (order_id,))
-        conn.execute("UPDATE jobs SET state='done', locked_by=NULL, locked_until=NULL, last_error=NULL "
-                     "WHERE order_id=%s", (order_id,))
+    return True
 
 def fail(conn, order_id, attempts, max_attempts, err):
     msg = str(err)[:500]
+    claim = (order_id, WORKER_ID, attempts)
+    exhausted = attempts >= max_attempts
     with conn.transaction():
-        if attempts >= max_attempts:
-            conn.execute("UPDATE jobs SET state='dead', locked_by=NULL, locked_until=NULL, last_error=%s "
-                         "WHERE order_id=%s", (msg, order_id))
-            conn.execute("UPDATE orders SET status='failed' WHERE id=%s AND status <> 'completed'", (order_id,))
-            jobs_processed.labels("dead").inc()
+        if exhausted:
+            job = conn.execute(
+                "UPDATE jobs SET state='dead', locked_by=NULL, locked_until=NULL, last_error=%s "
+                + OWNED_CLAIM, (msg, *claim),
+            )
         else:                                        # NO restock on failure
             delay = BACKOFF_BASE * (2 ** (attempts - 1))
-            conn.execute("UPDATE jobs SET state='queued', locked_by=NULL, locked_until=NULL, last_error=%s, "
-                         "next_run_at = now() + make_interval(secs => %s) WHERE order_id=%s",
-                         (msg, delay, order_id))
-            worker_retries.inc()
-            jobs_processed.labels("retry").inc()
+            job = conn.execute(
+                "UPDATE jobs SET state='queued', locked_by=NULL, locked_until=NULL, last_error=%s, "
+                "next_run_at = now() + make_interval(secs => %s) "
+                + OWNED_CLAIM, (msg, delay, *claim),
+            )
+        if job.rowcount == 0:
+            return False
+        if exhausted:
+            conn.execute("UPDATE orders SET status='failed' WHERE id=%s AND status <> 'completed'", (order_id,))
+    if exhausted:
+        jobs_processed.labels("dead").inc()
+    else:
+        worker_retries.inc()
+        jobs_processed.labels("retry").inc()
+    return True
 
 def main():
     start_http_server(METRICS_PORT)
@@ -83,12 +106,16 @@ def main():
             jlog(event="claimed", order_id=str(order_id), attempt=attempts)
             try:
                 process(conn, order_id)
-                complete(conn, order_id)
-                jobs_processed.labels("completed").inc()
-                jlog(event="completed", order_id=str(order_id))
             except Exception as e:
-                jlog(event="failed", order_id=str(order_id), attempt=attempts, error=str(e))
-                fail(conn, order_id, attempts, max_attempts, e)
+                if fail(conn, order_id, attempts, max_attempts, e):
+                    jlog(event="failed", order_id=str(order_id), attempt=attempts, error=str(e))
+                    continue
+            else:
+                if complete(conn, order_id, attempts):
+                    jobs_processed.labels("completed").inc()
+                    jlog(event="completed", order_id=str(order_id))
+                    continue
+            jlog(event="lease_lost", order_id=str(order_id), attempt=attempts)
 
 if __name__ == "__main__":
     main()

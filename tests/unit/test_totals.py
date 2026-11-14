@@ -1,5 +1,4 @@
 import pytest
-
 from services.totals import calculate_total_cents
 
 

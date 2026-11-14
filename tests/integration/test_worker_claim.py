@@ -7,7 +7,6 @@ from pathlib import Path
 
 import psycopg
 
-
 WORKER_PATH = Path(__file__).resolve().parents[2] / "worker" / "worker.py"
 
 spec = importlib.util.spec_from_file_location("fulfillops_worker", WORKER_PATH)
@@ -69,9 +68,7 @@ def test_worker_claims_queued_job(client, reset_test_db):
     assert job == ("processing", "worker-test-1", 1)
 
 
-def test_two_workers_claim_different_jobs_concurrently(
-    client, reset_test_db
-):
+def test_two_workers_claim_different_jobs_concurrently(client, reset_test_db):
     order_ids = create_jobs(2)
     barrier = threading.Barrier(2)
 

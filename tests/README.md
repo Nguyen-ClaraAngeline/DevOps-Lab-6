@@ -1,13 +1,16 @@
 # FulfillOps test evidence
 
-Part 4 verifies input validation, order acceptance, stock reservation under concurrent requests, and worker job claiming. The local PostgreSQL run passed **53 tests** after switching the FastAPI test client dependency to `httpx2`.
+Part 4 verifies input validation, order acceptance, stock reservation under concurrent requests, and worker job claiming. On 14 November 2026, the full local suite passed **53 tests** against isolated PostgreSQL 16 with `httpx2`. Ruff and the formatting check also passed.
 
-| Test layer | What it checks |
-| --- | --- |
-| [Unit](unit/) | Request validation, duplicate SKU normalization, and order totals. |
-| [Integration](integration/) | API health and readiness, transactional reservation and rollback, and concurrent worker claims. |
-| [Race](race/) | Two requests sharing an idempotency key create one order. Two distinct keys competing for seven units (four per request) produce one accepted order, one `OUT_OF_STOCK` response, and three units left. These tests use one API instance. |
-| [Regression](regression/test_red_to_green.py) | Duplicate lines for the same SKU are combined before reserving stock and calculating the total. |
+| Test layer | What it checks | Command (activated venv) | Result in full suite |
+| --- | --- | --- | --- |
+| [Unit](unit/) | Request validation, duplicate SKU normalization, and order totals. | `python -m pytest tests/unit -q` | 41 passed |
+| [Integration](integration/) | API health and readiness, transactional reservation and rollback, and concurrent worker claims. | `python -m pytest tests/integration -q` | 9 passed |
+| [Distinct-key race](race/test_concurrent_distinct_keys_cannot_oversell.py) | Twelve requests compete for seven units. Seven succeed, five return `OUT_OF_STOCK`, and stock reaches zero. Only accepted order IDs have order and job rows. | `python -m pytest tests/race/test_concurrent_distinct_keys_cannot_oversell.py -q` | 1 passed |
+| [Same-key race](race/test_race_same_key.py) | Eight identical requests return one order ID, reserve one unit, and create one order and one job. | `python -m pytest tests/race/test_race_same_key.py -q` | 1 passed |
+| [Regression](regression/test_red_to_green.py) | Duplicate SKU lines are combined before reserving stock and calculating the total. | `python -m pytest tests/regression/test_red_to_green.py -q` | 1 passed |
+
+Both race tests use one API instance. Part 5 covers cross-replica behavior.
 
 ## Reproduce the local run
 
@@ -45,6 +48,6 @@ Run the regression test once to establish the passing baseline. In [validation.p
 .venv\Scripts\python.exe -m pytest tests/regression/test_red_to_green.py -v
 ```
 
-- **Failing run:** Evidence pending.
-- **Passing run after restoring the fix:** Evidence pending.
-- **GitHub Actions:** Add the run link when CI passes.
+- **Failing local run:** `1 failed`. The test expected `6495` cents for five units and got `3897` cents for three units (`assert 3897 == 6495`).
+- **Passing local run after restoring the fix:** `1 passed`. The deliberate bug was run in a temporary copy and was not committed.
+- **GitHub Actions:** These results are local. The task breakdown also calls for failing and passing CI run links; add them once those runs are captured.

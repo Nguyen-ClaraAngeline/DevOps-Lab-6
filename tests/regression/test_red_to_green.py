@@ -1,6 +1,4 @@
-def test_duplicate_sku_lines_are_combined_in_created_order(
-    client, reset_test_db
-):
+def test_duplicate_sku_lines_are_combined_in_created_order(client, reset_test_db):
     response = client.post(
         "/api/v1/orders",
         headers={"Idempotency-Key": "regression-duplicate-001"},

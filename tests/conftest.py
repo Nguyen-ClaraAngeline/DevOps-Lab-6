@@ -1,11 +1,10 @@
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 import psycopg
 import pytest
-
-from urllib.parse import urlparse
 
 API_APP = Path(__file__).resolve().parents[1] / "api" / "app"
 sys.path.insert(0, str(API_APP))
@@ -17,9 +16,7 @@ TEST_DATABASE_URL = (
 )
 
 if urlparse(TEST_DATABASE_URL).path != "/fulfillops_test":
-    raise RuntimeError(
-        "Tests must use the dedicated fulfillops_test database."
-    )
+    raise RuntimeError("Tests must use the dedicated fulfillops_test database.")
 
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 

@@ -1,12 +1,20 @@
-import json, re, hashlib
+import hashlib
+import json
+import re
+
 from errors import ApiError
 
 KEY_RE = re.compile(r"[\x20-\x7E]{8,128}")
 MAX_BODY = 16 * 1024
 
+
 def parse_order(key, raw: bytes):
     if not key or not KEY_RE.fullmatch(key):
-        raise ApiError(400, "IDEMPOTENCY_REQUIRED", "Idempotency-Key header must be 8-128 printable ASCII characters")
+        raise ApiError(
+            400,
+            "IDEMPOTENCY_REQUIRED",
+            "Idempotency-Key header must be 8-128 printable ASCII characters",
+        )
     if len(raw) > MAX_BODY:
         raise ApiError(400, "INVALID_REQUEST", "Request body too large")
     try:
@@ -14,10 +22,13 @@ def parse_order(key, raw: bytes):
     except ValueError:
         raise ApiError(400, "INVALID_JSON", "Malformed JSON body")
     bad = lambda m: ApiError(400, "INVALID_REQUEST", m)
-    if not isinstance(body, dict): raise bad("Body must be an object")
+    if not isinstance(body, dict):
+        raise bad("Body must be an object")
     cid, items = body.get("customer_id"), body.get("items")
-    if not isinstance(cid, str) or not 1 <= len(cid) <= 64: raise bad("customer_id must be a string of 1-64 characters")
-    if not isinstance(items, list) or not 1 <= len(items) <= 10: raise bad("items must contain 1-10 entries")
+    if not isinstance(cid, str) or not 1 <= len(cid) <= 64:
+        raise bad("customer_id must be a string of 1-64 characters")
+    if not isinstance(items, list) or not 1 <= len(items) <= 10:
+        raise bad("items must contain 1-10 entries")
     for it in items:
         if not isinstance(it, dict) or not isinstance(it.get("sku"), str) or "quantity" not in it:
             raise bad("Each item needs sku and quantity")
@@ -28,6 +39,7 @@ def parse_order(key, raw: bytes):
     agg = {}
     for it in items:
         agg[it["sku"]] = agg.get(it["sku"], 0) + it["quantity"]
-    canonical = json.dumps({"customer_id": cid, "items": sorted(agg.items())},
-                           sort_keys=True, separators=(",", ":"))
+    canonical = json.dumps(
+        {"customer_id": cid, "items": sorted(agg.items())}, sort_keys=True, separators=(",", ":")
+    )
     return cid, agg, hashlib.sha256(canonical.encode()).hexdigest()

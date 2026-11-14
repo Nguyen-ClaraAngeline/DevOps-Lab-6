@@ -1,0 +1,59 @@
+Part 8 live kind verification: source was a temporary Git repository built from the working manifests. The tracked GitHub URL was unchanged.
+2026-11-14T06:08:12.4499877+00:00 Git snapshot 109e02f223c06a2fbb49fac04ade4c97eed60f32
+Client Version: v1.36.1
+Kustomize Version: v5.8.1
+Server Version: v1.35.0
+NAME            IMAGE
+argocd-server   quay.io/argoproj/argocd:v3.4.3
+NAME         SYNC STATUS   HEALTH STATUS
+fulfillops   Synced        Healthy
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/api        2/2     2            2           68s
+deployment.apps/postgres   1/1     1            1           81s
+deployment.apps/worker     2/2     2            2           68s
+
+NAME                           READY   STATUS      RESTARTS   AGE
+pod/api-7f7f6cfc75-bsrfs       1/1     Running     0          68s
+pod/api-7f7f6cfc75-cmfjk       1/1     Running     0          68s
+pod/migrate-z9bzs              0/1     Completed   0          73s
+pod/postgres-5cbf46674-c27dl   1/1     Running     0          81s
+pod/worker-5bfd89679d-2b2dk    1/1     Running     0          68s
+pod/worker-5bfd89679d-wfcxp    1/1     Running     0          68s
+
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/api        ClusterIP   10.96.10.65     <none>        8080/TCP   81s
+service/postgres   ClusterIP   10.96.171.101   <none>        5432/TCP   81s
+
+NAME                                  STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/postgres-data   Bound    pvc-0ac6124b-ca9e-43a6-b0ee-f632df058f57   1Gi        RWO            standard       <unset>                 81s
+
+NAME                STATUS     COMPLETIONS   DURATION   AGE
+job.batch/migrate   Complete   1/1           5s         73s
+CREATE TABLE
+apply 001
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+INSERT 0 1
+apply 002
+INSERT 0 1
+apply 003
+INSERT 0 1
+apply 004
+INSERT 0 3
+INSERT 0 1
+2026-11-14T06:09:03.2712129+00:00 Injected drift on the API; Git still specifies two replicas.
+2026-11-14T06:09:03.4427345+00:00 Live scale response: spec.replicas=3
+2026-11-14T06:09:03.7347207+00:00 API replicas=3; sync=OutOfSync
+2026-11-14T06:09:04.6222791+00:00 API replicas=2; sync=Synced
+application.argoproj.io/fulfillops condition met
+NAME         SYNC STATUS   HEALTH STATUS
+fulfillops   Synced        Healthy
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+api      2/2     2            2           71s
+worker   2/2     2            2           71s
+2026-11-14T06:09:05.1296837+00:00 PASS: Argo CD restored two replicas from Git without a manual corrective patch.

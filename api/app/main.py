@@ -10,7 +10,7 @@ import psycopg
 
 from db import pool
 from errors import ApiError
-from validation import parse_order
+from validation import MAX_BODY, parse_order
 import orders, metrics
 
 REQUIRED_MIGRATION = "001"
@@ -63,7 +63,7 @@ def ready():
             ok = c.execute("SELECT 1 FROM schema_migrations WHERE version=%s", (REQUIRED_MIGRATION,)).fetchone()
         if not ok: raise RuntimeError
     except Exception:
-        return err(503, "NOT_READY", "Service not ready")
+        return JSONResponse(status_code=503, content={"status": "not_ready"})
     return {"status": "ready"}
 
 @app.get("/api/v1/catalog")
@@ -101,8 +101,17 @@ def _handle_order(key, raw):
 
 @app.post("/api/v1/orders", status_code=202)
 async def post_order(request: Request):
-    raw = await request.body()
-    return await run_in_threadpool(_handle_order, request.headers.get("Idempotency-Key"), raw)
+    raw = bytearray()
+    async for chunk in request.stream():
+        if len(raw) + len(chunk) > MAX_BODY:
+            raise ApiError(400, "INVALID_REQUEST", "Request body too large")
+        raw.extend(chunk)
+
+    return await run_in_threadpool(
+        _handle_order,
+        request.headers.get("Idempotency-Key"),
+        bytes(raw),
+    )
 
 @app.get("/metrics")
 def prom(): return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)

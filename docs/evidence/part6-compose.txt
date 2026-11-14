@@ -1,0 +1,22 @@
+Part 6 Docker and Compose verification | 2026-11-14T04:26:26.0540613+00:00
+Git base: 856e8ee0bcce444ac3615f391566531d7156e6f7
+Project: fulfillops-part6-6241b545; temporary port override: database internal only, API on a random loopback port.
+Clean build: docker compose build --no-cache
+Clean build completed successfully.
+NAME                                  IMAGE                                        COMMAND                  SERVICE   CREATED          STATUS                      PORTS
+fulfillops-part6-6241b545-api-1       fulfillops-part6-6241b545-api:optimized      "uvicorn main:app --…"   api       18 seconds ago   Up 10 seconds (healthy)     127.0.0.1:49739->8080/tcp
+fulfillops-part6-6241b545-db-1        postgres:16.4-bookworm                       "docker-entrypoint.s…"   db        19 seconds ago   Up 17 seconds (healthy)     5432/tcp
+fulfillops-part6-6241b545-migrate-1   postgres:16.4-bookworm                       "sh /migrate.sh"         migrate   18 seconds ago   Exited (0) 11 seconds ago   
+fulfillops-part6-6241b545-worker-1    fulfillops-part6-6241b545-worker:optimized   "python worker.py"       worker    18 seconds ago   Up 10 seconds (healthy)     
+api: uid=10001(appuser) gid=999(appuser) groups=999(appuser)
+worker: uid=10001(appuser) gid=999(appuser) groups=999(appuser)
+Migration exited 0.
+Applied db/seed.sql because the catalog migration was not present on this branch.
+Order before teardown: {"order_id":"f8d33055-813d-47d3-bee7-2333656d5e9f","customer_id":"PART6-EVIDENCE","total_cents":1299,"status":"completed","created_at":"2026-11-14T05:27:35.795157+01:00","items":[{"sku":"KIT-100","quantity":1}]}
+Ran docker compose down without -v.
+Volume retained: fulfillops-part6-6241b545_pgdata
+Same order after restart: {"order_id":"f8d33055-813d-47d3-bee7-2333656d5e9f","customer_id":"PART6-EVIDENCE","total_cents":1299,"status":"completed","created_at":"2026-11-14T05:27:35.795157+01:00","items":[{"sku":"KIT-100","quantity":1}]}
+Image sizes: Docker image inspect .Size (bytes). Both variants use the same pinned base and requirements. The naive image installs directly into one stage and copies its full build context.
+api: naive=274712566 optimized=279095992 bytes
+worker: naive=217386396 optimized=221771788 bytes
+PASS: clean build, readiness, non-root users, order persistence, image size comparison.

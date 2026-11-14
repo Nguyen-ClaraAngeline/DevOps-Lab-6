@@ -6,7 +6,10 @@ import psycopg
 
 
 def test_concurrent_distinct_keys_cannot_oversell(client, reset_test_db):
-    barrier = Barrier(2)
+    request_count = 12
+    stock = client.get("/api/v1/inventory/KIT-100").json()["available"]
+    assert stock == 7
+    barrier = Barrier(request_count, timeout=10)
 
     def submit(key, customer_id):
         barrier.wait()
@@ -15,24 +18,28 @@ def test_concurrent_distinct_keys_cannot_oversell(client, reset_test_db):
             headers={"Idempotency-Key": key},
             json={
                 "customer_id": customer_id,
-                "items": [{"sku": "KIT-100", "quantity": 4}],
+                "items": [{"sku": "KIT-100", "quantity": 1}],
             },
         )
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=request_count) as executor:
         futures = [
-            executor.submit(submit, "race-distinct-001", "CUST-A"),
-            executor.submit(submit, "race-distinct-002", "CUST-B"),
+            executor.submit(submit, f"race-distinct-{i:03}", f"CUST-{i}")
+            for i in range(request_count)
         ]
         responses = [future.result(timeout=15) for future in futures]
 
-    assert sorted(r.status_code for r in responses) == [202, 409]
+    assert sorted(r.status_code for r in responses) == [202] * stock + [409] * (
+        request_count - stock
+    )
+    accepted_ids = {r.json()["order_id"] for r in responses if r.status_code == 202}
+    assert len(accepted_ids) == stock
+    assert all(
+        r.json()["error"]["code"] == "OUT_OF_STOCK" for r in responses if r.status_code == 409
+    )
 
-    rejected = next(r for r in responses if r.status_code == 409)
-    assert rejected.json()["error"]["code"] == "OUT_OF_STOCK"
-
-    assert client.get("/api/v1/inventory/KIT-100").json()["available"] == 3
+    assert client.get("/api/v1/inventory/KIT-100").json()["available"] == 0
 
     with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
-        assert conn.execute("SELECT count(*) FROM orders").fetchone()[0] == 1
-        assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 1
+        assert {str(row[0]) for row in conn.execute("SELECT id FROM orders")} == accepted_ids
+        assert {str(row[0]) for row in conn.execute("SELECT order_id FROM jobs")} == accepted_ids

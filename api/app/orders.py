@@ -3,6 +3,8 @@ from db import pool
 from errors import ApiError
 import metrics
 
+from services.totals import calculate_total_cents
+
 def lookup_prices(conn, skus):
     rows = conn.execute("SELECT sku, unit_price_cents FROM products WHERE sku = ANY(%s)", (list(skus),)).fetchall()
     prices = dict(rows)
@@ -23,13 +25,16 @@ def create_order(key, cid, agg, payload_hash):
                 if h != payload_hash:
                     raise ApiError(409, "IDEMPOTENCY_CONFLICT", "Idempotency key reused with a different payload")
                 return oid
-            total = 0
             for sku in sorted(agg):
                 q = agg[sku]
-                cur = conn.execute("UPDATE products SET available = available - %s WHERE sku = %s AND available >= %s", (q, sku, q))
+                cur = conn.execute(
+                    "UPDATE products SET available = available - %s WHERE sku = %s AND available >= %s",
+                    (q, sku, q),
+                )
                 if cur.rowcount == 0:
                     raise ApiError(409, "OUT_OF_STOCK", "Not enough stock")
-                total += prices[sku] * q
+
+            total = calculate_total_cents(agg, prices)
             conn.execute("INSERT INTO orders(id, customer_id, total_cents, status) VALUES (%s,%s,%s,'queued')", (new_id, cid, total))
             with conn.cursor() as cur:
                 cur.executemany("INSERT INTO order_items(order_id, sku, quantity) VALUES (%s,%s,%s)",

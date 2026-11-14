@@ -1,2 +1,3 @@
-pip install ruff pytest
-pip freeze | Select-String "^(ruff|pytest)=="
+pytest
+ruff
+httpx

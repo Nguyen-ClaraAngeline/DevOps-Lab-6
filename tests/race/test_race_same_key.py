@@ -4,9 +4,7 @@ from threading import Barrier
 import psycopg
 
 
-def test_concurrent_requests_with_same_key_create_one_order(
-    client, reset_test_db
-):
+def test_concurrent_requests_with_same_key_create_one_order(client, reset_test_db):
     payload = {
         "customer_id": "CUST-RACE",
         "items": [{"sku": "KIT-100", "quantity": 2}],
@@ -28,20 +26,14 @@ def test_concurrent_requests_with_same_key_create_one_order(
 
     assert all(response.status_code == 202 for response in responses)
 
-    order_ids = {
-        response.json()["order_id"] for response in responses
-    }
+    order_ids = {response.json()["order_id"] for response in responses}
     assert len(order_ids) == 1
 
     assert client.get("/api/v1/inventory/KIT-100").json()["available"] == 5
 
     with psycopg.connect(__import__("os").environ["DATABASE_URL"]) as conn:
-        order_count = conn.execute(
-            "SELECT count(*) FROM orders"
-        ).fetchone()[0]
-        job_count = conn.execute(
-            "SELECT count(*) FROM jobs"
-        ).fetchone()[0]
+        order_count = conn.execute("SELECT count(*) FROM orders").fetchone()[0]
+        job_count = conn.execute("SELECT count(*) FROM jobs").fetchone()[0]
 
     assert order_count == 1
     assert job_count == 1

@@ -48,9 +48,7 @@ def test_creates_order_and_reserves_stock(client, reset_test_db):
     assert client.get("/api/v1/inventory/PART-200").json()["available"] == 9
 
 
-def test_duplicate_request_returns_same_order_without_double_reservation(
-    client, reset_test_db
-):
+def test_duplicate_request_returns_same_order_without_double_reservation(client, reset_test_db):
     payload = make_payload()
 
     first = place_order(client, "reservation-002", payload)
@@ -64,9 +62,7 @@ def test_duplicate_request_returns_same_order_without_double_reservation(
     assert client.get("/api/v1/inventory/PART-200").json()["available"] == 9
 
 
-def test_reusing_key_with_different_payload_returns_conflict(
-    client, reset_test_db
-):
+def test_reusing_key_with_different_payload_returns_conflict(client, reset_test_db):
     first = place_order(
         client,
         "reservation-003",
@@ -87,9 +83,7 @@ def test_reusing_key_with_different_payload_returns_conflict(
     assert client.get("/api/v1/inventory/PACK-300").json()["available"] == 5
 
 
-def test_unknown_sku_is_rejected_without_reserving_stock(
-    client, reset_test_db
-):
+def test_unknown_sku_is_rejected_without_reserving_stock(client, reset_test_db):
     response = place_order(
         client,
         "reservation-004",
@@ -102,16 +96,16 @@ def test_unknown_sku_is_rejected_without_reserving_stock(
     assert client.get("/api/v1/inventory/KIT-100").json()["available"] == 7
 
 
-def test_insufficient_stock_rolls_back_entire_reservation(
-    client, reset_test_db
-):
+def test_insufficient_stock_rolls_back_entire_reservation(client, reset_test_db):
     response = place_order(
         client,
         "reservation-005",
-        make_payload(items=[
-            {"sku": "KIT-100", "quantity": 2},
-            {"sku": "PACK-300", "quantity": 6},
-        ]),
+        make_payload(
+            items=[
+                {"sku": "KIT-100", "quantity": 2},
+                {"sku": "PACK-300", "quantity": 6},
+            ]
+        ),
     )
 
     assert response.status_code == 409

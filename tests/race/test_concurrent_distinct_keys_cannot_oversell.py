@@ -1,13 +1,11 @@
+import os
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 
 import psycopg
-import os
 
 
-def test_concurrent_distinct_keys_cannot_oversell(
-    client, reset_test_db
-):
+def test_concurrent_distinct_keys_cannot_oversell(client, reset_test_db):
     barrier = Barrier(2)
 
     def submit(key, customer_id):
@@ -38,5 +36,3 @@ def test_concurrent_distinct_keys_cannot_oversell(
     with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
         assert conn.execute("SELECT count(*) FROM orders").fetchone()[0] == 1
         assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 1
-
-

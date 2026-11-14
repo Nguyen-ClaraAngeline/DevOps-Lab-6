@@ -1,3 +1,4 @@
 line-length = 100
+extend-exclude = ["assessment"]
 [lint]
 ignore = ["E701", "E702", "E731"]
